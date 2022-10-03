@@ -43,3 +43,18 @@ fn main() {
     println!("d0bby reading from {}", options.device_name);
     read_loop(&Path::new(&options.device_name));
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_args() {
+        let device_name = "/dev/zero";
+        let args = ["./d0bby".to_string(), device_name.to_string()].to_vec();
+        let result = parse_args(args);
+        assert!(result.is_ok());
+        let options = result.unwrap();
+        assert_eq!(options.device_name, device_name);
+    }
+}
