@@ -1,4 +1,5 @@
 use std::{env, process, path::Path, fs, time::Duration};
+use log::{debug, info, error};
 
 struct Options {
     device_name: String
@@ -17,7 +18,7 @@ fn parse_args(args: Vec<String>) -> Result<Options, &'static str> {
 }
 
 fn handle_data(data: &str) {
-    println!("Received data: {}", data);
+    debug!("Received data: {}", data);
 }
 
 fn read_loop(device_path: &Path) {
@@ -25,7 +26,7 @@ fn read_loop(device_path: &Path) {
         match fs::read_to_string(device_path) {
             Ok(data) => handle_data(&data.trim()),
             Err(err) => {
-                eprintln!("Cannot open device for reading: {}", err);
+                error!("Cannot open device for reading: {}", err);
             },
         };
 
@@ -34,13 +35,15 @@ fn read_loop(device_path: &Path) {
 }
 
 fn main() {
+    env_logger::init();
+
     let args: Vec<String> = env::args().collect();
     let options = parse_args(args).unwrap_or_else(|err| {
-        eprintln!("{}", err);
+        error!("{}", err);
         process::exit(1);
     });
 
-    println!("d0bby reading from {}", options.device_name);
+    info!("Reading from {}", options.device_name);
     read_loop(&Path::new(&options.device_name));
 }
 
