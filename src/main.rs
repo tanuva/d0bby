@@ -5,6 +5,11 @@ struct Options {
     device_name: String
 }
 
+struct MeterValues {
+    in_kwh: f32,
+    out_kwh: f32,
+}
+
 fn parse_args(args: Vec<String>) -> Result<Options, &'static str> {
     if args.len() != 2 {
         return Err("Expected exactly 1 argument: the device to read from");
@@ -17,8 +22,17 @@ fn parse_args(args: Vec<String>) -> Result<Options, &'static str> {
     return Ok(options);
 }
 
+fn parse_data(data: &str) -> MeterValues {
+    // TODO Fake it till you make it!
+    MeterValues {
+        in_kwh: 1337.0,
+        out_kwh: 42.0,
+    }
+}
+
 fn handle_data(data: &str) {
     debug!("Received data: {}", data);
+    let metered = parse_data(data);
 }
 
 fn read_loop(device_path: &Path) {
