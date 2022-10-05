@@ -28,22 +28,24 @@ fn parse_data(data: &str) -> Result<MeterValues, String> {
     })
 }
 
-fn handle_data(data: &str) {
-    debug!("Received data: {}", data);
-    let metered = parse_data(data);
-}
-
 fn read_loop(device_path: &Path) {
-    loop {
-        match fs::read_to_string(device_path) {
-            Ok(data) => handle_data(&data.trim()),
-            Err(err) => {
-                error!("Cannot open device for reading: {}", err);
-            },
-        };
+    let data = match fs::read_to_string(device_path) {
+        Ok(data) => data,
+        Err(err) => {
+            error!("Cannot open device for reading: {}", err);
+            return;
+        },
+    };
 
-        std::thread::sleep(Duration::from_secs(1));
-    }
+    debug!("Received data: {}", data);
+
+    let metered = match parse_data(&data) {
+        Ok(metered) => metered,
+        Err(err) => {
+            error!("Cannot parse data: {}", err);
+            return;
+        },
+    };
 }
 
 fn main() {
@@ -56,7 +58,11 @@ fn main() {
     });
 
     info!("Reading from {}", options.device_name);
-    read_loop(&Path::new(&options.device_name));
+
+    loop {
+        read_loop(&Path::new(&options.device_name));
+        std::thread::sleep(Duration::from_secs(1));
+    }
 }
 
 #[cfg(test)]
