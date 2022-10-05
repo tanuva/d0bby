@@ -1,13 +1,11 @@
+pub(crate) mod metervalues;
+
 use std::{env, process, path::Path, fs, time::Duration};
 use log::{debug, info, error};
+use metervalues::MeterValues;
 
 struct Options {
     device_name: String
-}
-
-struct MeterValues {
-    in_kwh: f32,
-    out_kwh: f32,
 }
 
 fn parse_args(args: Vec<String>) -> Result<Options, &'static str> {
