@@ -20,12 +20,12 @@ fn parse_args(args: Vec<String>) -> Result<Options, &'static str> {
     return Ok(options);
 }
 
-fn parse_data(data: &str) -> MeterValues {
+fn parse_data(data: &str) -> Result<MeterValues, String> {
     // TODO Fake it till you make it!
-    MeterValues {
+    Ok(MeterValues {
         in_kwh: 1337.0,
         out_kwh: 42.0,
-    }
+    })
 }
 
 fn handle_data(data: &str) {
