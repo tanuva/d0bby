@@ -1,8 +1,11 @@
+pub(crate) mod meterpublisher;
 pub(crate) mod metervalues;
 
 use std::{env, process, path::Path, fs, time::Duration};
 use log::{debug, info, error};
 use metervalues::MeterValues;
+
+use crate::meterpublisher::MeterPublisher;
 
 struct Options {
     device_name: String
@@ -28,7 +31,7 @@ fn parse_data(data: &str) -> Result<MeterValues, String> {
     })
 }
 
-fn read_loop(device_path: &Path) {
+fn read_loop(device_path: &Path, publisher: &mut MeterPublisher) {
     let data = match fs::read_to_string(device_path) {
         Ok(data) => data,
         Err(err) => {
@@ -46,6 +49,11 @@ fn read_loop(device_path: &Path) {
             return;
         },
     };
+
+    if let Err(err) = publisher.publish(&metered) {
+        error!("Cannot publish data: {}", err);
+        return;
+    }
 }
 
 fn main() {
@@ -57,10 +65,16 @@ fn main() {
         process::exit(1);
     });
 
+    let url = "tcp://idefix.local:1883";
+    let mut publisher = MeterPublisher::new(url).unwrap_or_else(|err| {
+        error!("{}", err);
+        process::exit(1);
+    });
+
     info!("Reading from {}", options.device_name);
 
     loop {
-        read_loop(&Path::new(&options.device_name));
+        read_loop(&Path::new(&options.device_name), &mut publisher);
         std::thread::sleep(Duration::from_secs(1));
     }
 }
@@ -77,5 +91,9 @@ mod tests {
         assert!(result.is_ok());
         let options = result.unwrap();
         assert_eq!(options.device_name, device_name);
+    }
+
+    fn test_parse_data() {
+        todo!()
     }
 }
