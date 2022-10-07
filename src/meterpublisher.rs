@@ -77,6 +77,12 @@ impl MeterPublisher {
         let instance_identifier = format!("d0bby_{}", self.identifier);
         let payload = object! {
             schema: "json",
+
+            availability_topic: self.topics.state.to_string(),
+            availability_template: "{{ value_json.state }}",
+            payload_available: "ON",
+            payload_not_available: "OFF",
+
             state_topic: self.topics.state.to_string(),
             unit_of_measurement: "kWh",
             device_class: "energy",
