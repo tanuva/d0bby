@@ -66,7 +66,13 @@ fn main() {
     });
 
     let url = "tcp://idefix.local:1883";
-    let mut publisher = MeterPublisher::new(url).unwrap_or_else(|err| {
+    let identifier = "hausanschluss";
+    let mut publisher = MeterPublisher::new(url, identifier).unwrap_or_else(|err| {
+        error!("{}", err);
+        process::exit(1);
+    });
+
+    publisher.publish_discovery().unwrap_or_else(|err| {
         error!("{}", err);
         process::exit(1);
     });
