@@ -1,14 +1,14 @@
 pub(crate) mod meterpublisher;
 pub(crate) mod metervalues;
 
-use std::{env, process, path::Path, fs, time::Duration};
-use log::{debug, info, error};
+use log::{debug, error, info};
 use metervalues::MeterValues;
+use std::{env, fs, path::Path, process, time::Duration};
 
 use crate::meterpublisher::MeterPublisher;
 
 struct Options {
-    device_name: String
+    device_name: String,
 }
 
 fn parse_args(args: Vec<String>) -> Result<Options, &'static str> {
@@ -17,7 +17,7 @@ fn parse_args(args: Vec<String>) -> Result<Options, &'static str> {
     }
 
     let options = Options {
-        device_name: args[1].to_string()
+        device_name: args[1].to_string(),
     };
 
     return Ok(options);
@@ -37,7 +37,7 @@ fn read_loop(device_path: &Path, publisher: &mut MeterPublisher) {
         Err(err) => {
             error!("Cannot open device for reading: {}", err);
             return;
-        },
+        }
     };
 
     debug!("Received data: {}", data);
@@ -47,7 +47,7 @@ fn read_loop(device_path: &Path, publisher: &mut MeterPublisher) {
         Err(err) => {
             error!("Cannot parse data: {}", err);
             return;
-        },
+        }
     };
 
     if let Err(err) = publisher.publish(&metered) {
@@ -81,7 +81,7 @@ fn main() {
 
     loop {
         read_loop(&Path::new(&options.device_name), &mut publisher);
-        std::thread::sleep(Duration::from_secs(1));
+        std::thread::sleep(Duration::from_secs(10));
     }
 }
 

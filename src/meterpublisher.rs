@@ -1,8 +1,8 @@
-use std::time::Duration;
-use log::error;
 use crate::metervalues::MeterValues;
 use json::{self, object};
+use log::error;
 use paho_mqtt as mqtt;
+use std::time::Duration;
 
 pub struct MeterPublisher {
     client: mqtt::Client,
@@ -23,7 +23,7 @@ impl MeterPublisher {
             Err(err) => {
                 let msg = format!("{:?}", err);
                 return Err(msg);
-            },
+            }
         };
 
         let conn_opts = mqtt::ConnectOptionsBuilder::new()
