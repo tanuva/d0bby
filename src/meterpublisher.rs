@@ -21,19 +21,18 @@ impl MeterPublisher {
         let client = match mqtt::Client::new(url) {
             Ok(client) => client,
             Err(err) => {
-                let msg = format!("{:?}", err);
-                return Err(msg);
+                return Err(format!("{:?}", err));
             }
         };
 
         let conn_opts = mqtt::ConnectOptionsBuilder::new()
             .keep_alive_interval(Duration::from_secs(20))
             .clean_session(true)
+            // TODO Will message
             .finalize();
 
         if let Err(err) = client.connect(conn_opts) {
-            let msg = format!("Cannot connect to {}: {:?}", url, err);
-            return Err(msg);
+            return Err(format!("Cannot connect to {}: {:?}", url, err));
         }
 
         Ok(MeterPublisher {
@@ -50,8 +49,7 @@ impl MeterPublisher {
     pub fn publish(&self, values: &MeterValues) -> Result<(), String> {
         if !self.client.is_connected() {
             if let Err(err) = self.client.reconnect() {
-                let msg = format!("{:?}", err);
-                return Err(msg);
+                return Err(format!("{:?}", err));
             }
         }
 
@@ -63,8 +61,7 @@ impl MeterPublisher {
 
         let msg = mqtt::Message::new(&self.topics.state, json::stringify(payload), 0);
         if let Err(err) = self.client.publish(msg) {
-            let msg = format!("{:?}", err);
-            return Err(msg);
+            return Err(format!("{:?}", err));
         }
 
         Ok(())
@@ -73,8 +70,7 @@ impl MeterPublisher {
     pub fn publish_discovery(&self) -> Result<(), String> {
         if !self.client.is_connected() {
             if let Err(err) = self.client.reconnect() {
-                let msg = format!("{:?}", err);
-                return Err(msg);
+                return Err(format!("{:?}", err));
             }
         }
 
@@ -94,42 +90,34 @@ impl MeterPublisher {
 
         let mut payload_in = payload.clone();
         if let Err(err) = payload_in.insert("unique_id", format!("{}_in", instance_identifier)) {
-            let msg = format!("{:?}", err);
-            return Err(msg);
+            return Err(format!("{:?}", err));
         }
         if let Err(err) = payload_in.insert("name", "Input") {
-            let msg = format!("{:?}", err);
-            return Err(msg);
+            return Err(format!("{:?}", err));
         }
         if let Err(err) = payload_in.insert("value_template", "{{ value_json.in_kwh }}") {
-            let msg = format!("{:?}", err);
-            return Err(msg);
+            return Err(format!("{:?}", err));
         }
 
         let msg = mqtt::Message::new(&self.topics.discovery_in, payload_in.dump(), 0);
         if let Err(err) = self.client.publish(msg) {
-            let msg = format!("{:?}", err);
-            return Err(msg);
+            return Err(format!("{:?}", err));
         }
 
         let mut payload_out = payload.clone();
         if let Err(err) = payload_out.insert("unique_id", format!("{}_out", instance_identifier)) {
-            let msg = format!("{:?}", err);
-            return Err(msg);
+            return Err(format!("{:?}", err));
         }
         if let Err(err) = payload_out.insert("name", "Output") {
-            let msg = format!("{:?}", err);
-            return Err(msg);
+            return Err(format!("{:?}", err));
         }
         if let Err(err) = payload_out.insert("value_template", "{{ value_json.out_kwh }}") {
-            let msg = format!("{:?}", err);
-            return Err(msg);
+            return Err(format!("{:?}", err));
         }
 
         let msg = mqtt::Message::new(&self.topics.discovery_out, payload_out.dump(), 0);
         if let Err(err) = self.client.publish(msg) {
-            let msg = format!("{:?}", err);
-            return Err(msg);
+            return Err(format!("{:?}", err));
         }
 
         Ok(())
