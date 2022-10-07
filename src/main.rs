@@ -1,6 +1,7 @@
 pub(crate) mod meterpublisher;
 pub(crate) mod metervalues;
 
+use json;
 use log::{debug, error, info};
 use metervalues::MeterValues;
 use std::{env, fs, path::Path, process, time::Duration};
@@ -9,15 +10,47 @@ use crate::meterpublisher::MeterPublisher;
 
 struct Options {
     device_name: String,
+    broker_url: String,
+    instance_id: String,
 }
 
-fn parse_args(args: Vec<String>) -> Result<Options, &'static str> {
-    if args.len() != 2 {
-        return Err("Expected exactly 1 argument: the device to read from");
+fn read_config(file_path: &Path) -> Result<Options, String> {
+    let config_text = match fs::read_to_string(file_path) {
+        Ok(text) => text,
+        Err(err) => {
+            return Err(format!("Cannot read configuration: {}", err));
+        }
+    };
+    let config_json = match json::parse(&config_text) {
+        Ok(json) => json,
+        Err(err) => {
+            return Err(format!("Cannot parse configuration: {}", err));
+        }
+    };
+
+    for key in ["d0_device", "broker_url", "identifier"] {
+        if !config_json.has_key(key) {
+            return Err(format!("Cannot find key '{}' in {:?}", key, file_path));
+        }
     }
 
-    let options = Options {
-        device_name: args[1].to_string(),
+    return Ok(Options {
+        device_name: config_json["d0_device"].to_string(),
+        broker_url: config_json["broker_url"].to_string(),
+        instance_id: config_json["identifier"].to_string(),
+    });
+}
+
+fn parse_args(args: Vec<String>) -> Result<Options, String> {
+    if args.len() != 2 {
+        return Err(format!("Usage: {} /path/to/d0_device", args[0]));
+    }
+
+    let options = match read_config(&Path::new(&args[1])) {
+        Ok(options) => options,
+        Err(err) => {
+            return Err(err);
+        }
     };
 
     return Ok(options);
@@ -65,12 +98,11 @@ fn main() {
         process::exit(1);
     });
 
-    let url = "tcp://idefix.local:1883";
-    let identifier = "hausanschluss";
-    let mut publisher = MeterPublisher::new(url, identifier).unwrap_or_else(|err| {
-        error!("{}", err);
-        process::exit(1);
-    });
+    let mut publisher = MeterPublisher::new(&options.broker_url, &options.instance_id)
+        .unwrap_or_else(|err| {
+            error!("{}", err);
+            process::exit(1);
+        });
 
     publisher.publish_discovery().unwrap_or_else(|err| {
         error!("{}", err);
@@ -91,12 +123,14 @@ mod tests {
 
     #[test]
     fn test_parse_args() {
-        let device_name = "/dev/zero";
-        let args = ["./d0bby".to_string(), device_name.to_string()].to_vec();
+        let config_file = "config.sample.json";
+        let args = ["./d0bby".to_string(), config_file.to_string()].to_vec();
         let result = parse_args(args);
         assert!(result.is_ok());
         let options = result.unwrap();
-        assert_eq!(options.device_name, device_name);
+        assert_eq!(options.device_name, "/path/to/d0_device");
+        assert_eq!(options.broker_url, "tcp://localhost:1883");
+        assert_eq!(options.instance_id, "main_electricity_meter");
     }
 
     fn test_parse_data() {

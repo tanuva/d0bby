@@ -1,0 +1,5 @@
+{
+    "d0_device": "/path/to/d0_device",
+    "broker_url": "tcp://localhost:1883",
+    "identifier": "main_electricity_meter"
+}
