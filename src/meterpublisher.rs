@@ -17,7 +17,21 @@ struct Topics {
 }
 
 impl MeterPublisher {
+    fn make_lwt_message(topic: &str) -> mqtt::Message {
+        let payload = object! {
+            state: "OFF"
+        };
+
+        return mqtt::Message::new_retained(topic, json::stringify(payload), 0);
+    }
+
     pub fn new(url: &str, identifier: &str) -> Result<MeterPublisher, String> {
+        let topics = Topics {
+            state: format!("d0bby/{}/state", identifier),
+            discovery_in: format!("homeassistant/sensor/d0bby/{}_in/config", identifier),
+            discovery_out: format!("homeassistant/sensor/d0bby/{}_out/config", identifier),
+        };
+
         let client = match mqtt::Client::new(url) {
             Ok(client) => client,
             Err(err) => {
@@ -28,7 +42,7 @@ impl MeterPublisher {
         let conn_opts = mqtt::ConnectOptionsBuilder::new()
             .keep_alive_interval(Duration::from_secs(20))
             .clean_session(true)
-            // TODO Will message
+            .will_message(MeterPublisher::make_lwt_message(&topics.state))
             .finalize();
 
         if let Err(err) = client.connect(conn_opts) {
@@ -38,11 +52,7 @@ impl MeterPublisher {
         Ok(MeterPublisher {
             client,
             identifier: identifier.to_string(),
-            topics: Topics {
-                state: format!("d0bby/{}/state", identifier),
-                discovery_in: format!("homeassistant/sensor/d0bby/{}_in/config", identifier),
-                discovery_out: format!("homeassistant/sensor/d0bby/{}_out/config", identifier),
-            },
+            topics,
         })
     }
 
