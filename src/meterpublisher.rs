@@ -99,7 +99,7 @@ impl MeterPublisher {
             return Err(format!("{:?}", err));
         }
 
-        let msg = mqtt::Message::new(&self.topics.discovery_in, payload_in.dump(), 0);
+        let msg = mqtt::Message::new_retained(&self.topics.discovery_in, payload_in.dump(), 0);
         if let Err(err) = self.client.publish(msg) {
             return Err(format!("{:?}", err));
         }
@@ -115,7 +115,7 @@ impl MeterPublisher {
             return Err(format!("{:?}", err));
         }
 
-        let msg = mqtt::Message::new(&self.topics.discovery_out, payload_out.dump(), 0);
+        let msg = mqtt::Message::new_retained(&self.topics.discovery_out, payload_out.dump(), 0);
         if let Err(err) = self.client.publish(msg) {
             return Err(format!("{:?}", err));
         }
